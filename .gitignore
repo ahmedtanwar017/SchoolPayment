@@ -6,7 +6,7 @@ node_modules/
 .env.local
 
 # Config secrets (Mongo URI, passwords, etc.)
-config/*.json
+backend/config/*.json
 
 # Logs
 *.log
