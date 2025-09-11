@@ -43,6 +43,7 @@ const orderSchema = new mongoose.Schema(
   {
     timestamps: true,        // createdAt & updatedAt automatically
     strict: true,            // only defined fields will be saved
+    minimize: false,         // empty objects also stored
   }
 );
 
