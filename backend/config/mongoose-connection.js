@@ -5,7 +5,7 @@ const debug = require("debug")("app:db");
 const connectDB = async () => {
   try {
     // Mongo URI from config (which ideally reads from development.json)
-    const mongoURI = `${config.get("MONGODB_URI")}/schoolpay`;
+    const mongoURI = `${config.get("MONGODB_URI")}`;
 
     if (!mongoURI) {
       throw new Error("Mongo URI not defined in config/environment");
