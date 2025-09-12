@@ -15,7 +15,7 @@ router.post("/login", loginUser);
 // @desc    Logot user
 router.get("/logout", logoutUser);
 
-
+// Dashboard Login
 router.get("/me", loggedIn, getMe);
 
 module.exports = router;

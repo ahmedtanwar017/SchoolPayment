@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../Components/Spinner";
-import { toast } from "react-toastify";
 import api from "../Services/Axios";
 
 // Reusable Input Component
@@ -96,30 +95,24 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) {
-      toast.error("⚠ Please fill in all fields");
-      return;
-    }
+    if (!formData.email || !formData.password) return;
 
     setLoading(true);
     try {
-      const response = await api.post("/users/login", formData);
+      await api.post("/users/login", formData);
 
-      // Success toast
-      toast.success("✅ Login successful!");
-
-      // Redirect to student payment dashboard
-      navigate("/dashboard"); // <-- change "/dashboard" to your actual route
+      // Smooth login: small delay to show spinner
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true }); // actual route
+      }, 800); // 0.7 seconds for smooth transition
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "❌ Invalid credentials");
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-10 border border-gray-100">
         <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">
           Student Login

@@ -17,17 +17,18 @@ const Register = () => {
     e.preventDefault();
 
     if (!formData.fullname || !formData.email || !formData.password) {
-      toast.error("⚠ Please fill in all fields");
+      toast.error("Please fill in all fields.");
       return;
     }
 
     setLoading(true);
     try {
       await api.post("/users/register", formData);
-      toast.success("✅ Registration successful!");
+
+      // Redirect silently to login
       navigate("/login");
     } catch (err) {
-      toast.error(err.response?.data?.message || "❌ Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

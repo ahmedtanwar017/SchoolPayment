@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const connectDB = require("./config/mongoose-connection");
 const usersRouter = require("./routes/usersRouter");
+const adminsRouter = require("./routes/adminsRouter")
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -15,7 +16,7 @@ const app = express();
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173", // React frontend
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // React frontend
     credentials: true,
   })
 );
@@ -25,19 +26,18 @@ app.use(express.urlencoded({ extended: true }));
 // Connect to MongoDB
 connectDB();
 
-// Default route
+// Health check route
 app.get("/", (req, res) => {
-  res.send("🚀 SchoolPay Backend Working");
+  res.status(200).send("SchoolPay Backend is running");
 });
 
 // API routes
 app.use("/users", usersRouter);
+app.use("/admins", adminsRouter);
 
 // Start server
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  
-  const mode = process.env.NODE_ENV || "unknown";
-  console.log(`ℹ️ Running in ${mode} mode`);
+  console.log(`Server is running at http://localhost:${PORT}`);
 });

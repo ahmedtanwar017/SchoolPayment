@@ -10,6 +10,7 @@ import Dashboard from "./Pages/StudentDashboard";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 import Logout from "./Pages/Logout";
+import AdminLogin from "./Pages/LoginAdmin";
 
 function App() {
   return (
@@ -22,8 +23,12 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Public routes */}
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        { /* Admin routes */}
+        <Route path="/auth/login" element={<AdminLogin />} />
 
         {/* Protected routes */}
         <Route

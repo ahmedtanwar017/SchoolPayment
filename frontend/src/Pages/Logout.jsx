@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../Services/Axios";
@@ -6,38 +6,44 @@ import Spinner from "../Components/Spinner";
 
 const Logout = () => {
   const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(true);
 
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
+    const { signal } = controller;
 
     const logoutUser = async () => {
       try {
-        // ✅ Call backend logout route (clears cookie/session)
-        await api.get("/users/logout");
+        // Call backend logout route
+        await api.get("/users/logout", { signal });
 
-        if (active) {
-          toast.success("👋 Logged out successfully!");
-          setTimeout(() => navigate("/login", { replace: true }), 1500);
-        }
+        // Small delay to make the logout feel smooth
+        setTimeout(() => {
+          setLoggingOut(false);
+          navigate("/login", { replace: true });
+        }, 800); // 0.8 second delay
       } catch (err) {
-        if (active) {
+        if (err.name !== "CanceledError") {
+          console.error("Logout error:", err);
           toast.error(err.response?.data?.message || "Logout failed");
-          setTimeout(() => navigate("/login", { replace: true }), 1500);
+          navigate("/login", { replace: true });
         }
       }
     };
 
     logoutUser();
 
-    return () => {
-      active = false;
-    };
+    return () => controller.abort();
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Spinner />
-      <p className="ml-3 text-gray-600">Logging you out...</p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 transition-all duration-500">
+      <div className="flex flex-col items-center space-y-4 animate-fade-in">
+        <Spinner />
+        <p className="text-gray-600 text-lg text-center">
+          Logging you out, please wait...
+        </p>
+      </div>
     </div>
   );
 };

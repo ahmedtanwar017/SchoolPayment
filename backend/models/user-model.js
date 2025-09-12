@@ -26,7 +26,14 @@ const userSchema = new mongoose.Schema({
     minlength: [8, "Password must be at least 8 characters"],
     select: false, // Don't return password by default
   },
+  isAdmin: {
+    type: Boolean,
+    required: true, // Must always be present
+    default: false, // New users are regular users by default
+    index: true, // Indexed for faster queries
+    enum: [true, false], // Strictly allows only true or false
+    description: "Indicates if the user has administrative privileges",
+  },
 });
-
 
 module.exports = mongoose.model("User", userSchema);
