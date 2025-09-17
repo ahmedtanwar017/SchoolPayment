@@ -100,7 +100,7 @@ const PaymentForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <InputField label="Student Name" type="text" value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Enter student name" />
-          <InputField label="Student ID" type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Enter student ID" />
+          <InputField label="Phone Number" type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Enter student phone number" />
           <InputField label="Student Email" type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} placeholder="Enter student email" />
           <InputField label="Amount (INR)" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" />
 

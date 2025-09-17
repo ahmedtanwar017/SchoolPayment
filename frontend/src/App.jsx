@@ -14,10 +14,9 @@ const Login = lazy(() => import("./Pages/Login"));
 const Register = lazy(() => import("./Pages/Register"));
 const Logout = lazy(() => import("./Pages/Logout"));
 const AdminLogin = lazy(() => import("./Pages/LoginAdmin"));
-const AdminDashboard = lazy(() => import("./Pages/AdminDashboard"));
+const TransactionsDashboard = lazy(() => import("./Pages/TransactionsDashboard"));
 const PaymentForm = lazy(() => import("./Pages/CreateAmount"));
 const CheckPaymentStatus = lazy(() => import("./Pages/CheckPaymentStatus.jsx"));
-const TransactionsDashboard = lazy(() => import("./Pages/GetTransactions.jsx"));
 
 function App() {
   return (
@@ -47,15 +46,11 @@ function App() {
             path="/admin/dashboard"
             element={
               <AdminProtectedRoute>
-                <AdminDashboard />
+                <TransactionsDashboard />
               </AdminProtectedRoute>
             }
           />
-          <Route path="/transaction" element={<TransactionsDashboard />} />
-          
-    
-          
-
+      
           {/* Protected routes for regular users */}
           <Route
             path="/dashboard"
