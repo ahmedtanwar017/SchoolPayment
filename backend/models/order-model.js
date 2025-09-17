@@ -2,50 +2,20 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    school_id: {
-      type: mongoose.Types.ObjectId,
-      required: true,
-      ref: "School",
-    },
-    trustee_id: {
-      type: mongoose.Types.ObjectId,
-      required: true,
-      ref: "Trustee",
-    },
-    types: {
-      type: mongoose.Schema.Types.Mixed, // ObjectId or string
-      required: true,
-    },
+    school_id: { type: mongoose.Schema.Types.Mixed, required: true },
+    trustee_id: { type: mongoose.Schema.Types.Mixed, default: null },
     student_info: {
-      name: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      id: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      email: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-      },
+      name: { type: String, required: true, trim: true },
+      id: { type: String, trim: true },
+      email: { type: String, trim: true, lowercase: true },
     },
-    gateway_name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    gateway_name: { type: String, required: true, trim: true },
+    order_amount: { type: Number, default: 0 },
+    collect_request_id: { type: String, default: "" },  // store customer ID here  
   },
   {
-    timestamps: true,        // createdAt & updatedAt automatically
-    strict: true,            // only defined fields will be saved
-    minimize: false,         // empty objects also stored
+    timestamps: true,
   }
 );
 
-const Order = mongoose.model("Order", orderSchema);
-module.exports = Order;
+module.exports = mongoose.model("Order", orderSchema);

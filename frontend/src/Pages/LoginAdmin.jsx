@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Spinner from "../Components/Spinner";
 import api from "../Services/Axios";
 
-// Base Eye Icon SVGs
 const EyeIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -17,7 +16,6 @@ const EyeOffIcon = ({ className }) => (
   </svg>
 );
 
-// Reusable Input Component
 const InputField = ({ label, type, name, value, onChange, placeholder, showToggle, toggleState, setToggleState }) => (
   <div>
     <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
@@ -51,31 +49,47 @@ const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = e => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = e => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError(""); // clear error when typing again
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
     const { email, password } = formData;
 
-    if (!email || !password) return;
+    if (!email || !password) {
+      setError("Both email and password are required.");
+      return;
+    }
 
     setLoading(true);
+    setError("");
+
     try {
       const res = await api.post("/admins/auth/login", formData);
 
       if (!res.data.user?.isAdmin) {
+        setError("Access denied. Admins only.");
         setLoading(false);
-        console.warn("Access denied. Admins only.");
         return;
       }
 
-      console.log("Login successful. Redirecting to admin dashboard...");
-
-      setTimeout(() => navigate("/admin/dashboard", { replace: true }), 800);
+      // Keep spinner for 800ms then redirect
+      setTimeout(() => {
+        navigate("/admin/dashboard", { replace: true });
+      }, 800);
     } catch (err) {
-      console.error("Admin login error:", err);
-      setLoading(false);
+      if (err.response) {
+        setError(err.response.data.message || "Invalid email or password.");
+      } else if (err.request) {
+        setError("Server is not responding. Please try again later.");
+      } else {
+        setError("Unexpected error occurred. Please try again.");
+      }
+      setLoading(false); // stop spinner immediately on error
     }
   };
 
@@ -86,6 +100,12 @@ const AdminLogin = () => {
         <p className="text-center text-sm text-gray-500 mb-6">
           Only authorized administrators can access this panel.
         </p>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium bg-red-100 text-red-700 border border-red-200">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <InputField
@@ -110,7 +130,7 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center shadow-sm hover:shadow-md"
+            className="w-full h-12 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-70"
           >
             {loading ? <Spinner /> : "Sign in"}
           </button>

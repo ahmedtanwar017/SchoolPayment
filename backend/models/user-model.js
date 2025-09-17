@@ -32,7 +32,6 @@ const userSchema = new mongoose.Schema({
     default: false, // New users are regular users by default
     index: true, // Indexed for faster queries
     enum: [true, false], // Strictly allows only true or false
-    description: "Indicates if the user has administrative privileges",
   },
 });
 

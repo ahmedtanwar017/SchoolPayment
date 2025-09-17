@@ -7,10 +7,11 @@ const generateToken = (user) => {
   }
 
   try {
-    // Payload for the token
+    // Payload for the token (works for both users and admins)
     const payload = {
       id: user._id.toString(),
       email: user.email,
+      isAdmin: user.isAdmin || false,  
     };
 
     // Secret key from environment
@@ -20,12 +21,11 @@ const generateToken = (user) => {
     }
 
     // Sign token
-    const token = jwt.sign(payload, secret, {
+    return jwt.sign(payload, secret, {
       expiresIn: "1d",   // Token valid for 1 day
       algorithm: "HS256", // Explicit algorithm
     });
 
-    return token;
   } catch (error) {
     console.error("JWT generation failed:", error);
     throw new Error("Token generation failed: " + error.message);

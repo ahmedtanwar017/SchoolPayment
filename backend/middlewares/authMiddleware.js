@@ -47,25 +47,39 @@ const loggedIn = (req, res, next) => {
 
 // middleware/auth.js
 const isAdmin = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({
-      success: false,
-      error: "Authentication required",
-      message: "User not authenticated",
-    });
-  }
+  try {
+    let token = null;
 
-  if (!req.user.isAdmin) {
-    return res.status(403).json({
-      success: false,
-      error: "Forbidden",
-      message: "Admin access required",
-    });
-  }
+    // Check cookie
+    if (req.cookies?.token) {
+      token = req.cookies.token;
+    }
 
-  // User is authenticated and is an admin
-  next();
+    // Check Authorization header
+    else if (req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      if (authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+      } else {
+        token = authHeader; // raw token
+      }
+    }
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: "No token, authorization denied" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ success: false, message: "Access denied. Admin only." });
+    }
+
+    req.admin = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
 };
-
 
 module.exports = { loggedIn, isAdmin };

@@ -1,56 +1,106 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Components
 import ProtectedRoute from "./Components/ProtectedRoute";
+import AdminProtectedRoute from "./Components/AdminProtectedRoute";
+import Spinner from "./Components/Spinner";
 
-// Pages
-import Dashboard from "./Pages/StudentDashboard";
-import Login from "./Pages/Login";
-import Register from "./Pages/Register";
-import Logout from "./Pages/Logout";
-import AdminLogin from "./Pages/LoginAdmin";
+// Lazy-loaded Pages
+const Dashboard = lazy(() => import("./Pages/StudentDashboard"));
+const Login = lazy(() => import("./Pages/Login"));
+const Register = lazy(() => import("./Pages/Register"));
+const Logout = lazy(() => import("./Pages/Logout"));
+const AdminLogin = lazy(() => import("./Pages/LoginAdmin"));
+const AdminDashboard = lazy(() => import("./Pages/AdminDashboard"));
+const PaymentForm = lazy(() => import("./Pages/CreateAmount"));
+const CheckPaymentStatus = lazy(() => import("./Pages/CheckPaymentStatus.jsx"));
+const TransactionsDashboard = lazy(() => import("./Pages/GetTransactions.jsx"));
 
 function App() {
   return (
     <BrowserRouter>
-      {/* Toast notifications (global) */}
+      {/* Global toast notifications */}
       <ToastContainer position="top-center" autoClose={1500} hideProgressBar />
 
-      <Routes>
-        {/* Default route → redirect to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Suspense fallback for lazy-loaded pages */}
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen">
+            <Spinner />
+          </div>
+        }
+      >
+        <Routes>
+          {/* Default route → redirect to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Public routes */}
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+          {/* Admin routes */}
+          <Route path="/auth/login" element={<AdminLogin />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route path="/transaction" element={<TransactionsDashboard />} />
+          
+    
+          
 
-        { /* Admin routes */}
-        <Route path="/auth/login" element={<AdminLogin />} />
+          {/* Protected routes for regular users */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-payment"
+            element={
+              <ProtectedRoute>
+                <PaymentForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/status"
+            element={
+              <ProtectedRoute>
+                <CheckPaymentStatus />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/logout"
+            element={
+              <ProtectedRoute>
+                <Logout />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/logout"
-          element={
-            <ProtectedRoute>
-              <Logout />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Fallback route (404) */}
-        <Route path="*" element={<h1 className="text-center mt-20 text-2xl">404 - Page Not Found</h1>} />
-      </Routes>
+          {/* Fallback route → 404 */}
+          <Route
+            path="*"
+            element={
+              <h1 className="text-center mt-20 text-2xl font-semibold">
+                404 - Page Not Found
+              </h1>
+            }
+          />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
