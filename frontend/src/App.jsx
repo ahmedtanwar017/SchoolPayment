@@ -50,6 +50,14 @@ function App() {
               </AdminProtectedRoute>
             }
           />
+          <Route
+            path="/transactions"
+            element={
+              <AdminProtectedRoute>
+                <TransactionsDashboard />
+              </AdminProtectedRoute>
+            }
+          />
       
           {/* Protected routes for regular users */}
           <Route

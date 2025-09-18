@@ -210,10 +210,100 @@ POST http://localhost:5000/webhooks
 ```
 ***Verify that MongoDB order status updates correctly.***
 
-### Deployment
-- Deploy backend on Render / Railway / Heroku.
+### Postman Collections
 
-- Deploy frontend on Vercel / Netlify.
+1. Users(Student)
+
+- Register a User{Student}
+
+```
+{
+    "fullname": "Ahmed Tanwar",
+    "email": "ahmed61@example.com",
+    "password": "@Hmed_017"
+}
+```
+- Login User
+
+```
+ {  
+    "email": "ahmedtanwar17@gmail.com",
+    "password": "@Hmed_017"
+}
+```
+
+- Protected Routes
+```
+"Authorization": "token"
+```
+
+2.  Admin(Dashboard Manager)
+
+- Create Admin
+
+```
+node scripts/createAdmin.js
+--- Admin Creation Script ---
+Enter admin email: adminMangaer@gmail.com
+Enter admin full name: Admin Full Name
+Admin created successfully.
+Email: adminmangaer@gmail.com
+Full Name: Admin Full Name
+```
+- Admin Login
+
+```
+{
+    "email":"ahmedtanwar76@gmail.com",
+    "password":"@Hmed_017"
+}
+```
+
+- Admin Protected Routes
+
+```
+"Authorization": "token"
+```
+3. Create Payments
+
+- create-payments
+
+```
+{
+  "amount": 165,
+  "student_info": {
+    "name": "John Doe",
+    "id": "STU12345",
+    "email": "johndoe@example.com"
+  }
+}
+
+```
+
+- check-payments
+
+```
+base-url/payments/status/collect-request-id(OrderId)
+```
+- Transactions
+
+```
+base-url/admin-dashboard/getalltransactions
+```
+
+### Deployment
+- Deploy backend on Vercel.
+
+```
+https://school-payment-psi.vercel.app/
+
+```
+
+- Deploy frontend on  Netlify.
+
+```
+
+```
 
 - Update .env with production URLs.
 

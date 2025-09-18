@@ -43,7 +43,7 @@ export default function TransactionsDashboard() {
   const handleLogout = async () => {
     try {
       // Call the logout API endpoint
-      await api.post("/logout");
+      await api.get("/logout");
       
       // Redirect to auth login
       navigate("/auth/login");
