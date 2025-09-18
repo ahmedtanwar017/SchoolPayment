@@ -302,6 +302,7 @@ https://school-payment-psi.vercel.app/
 - Deploy frontend on  Netlify.
 
 ```
+https://schoolpayments.netlify/
 
 ```
 
