@@ -7,7 +7,7 @@ const debug = require("debug")("app:db");
  */
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || config.get("MONGODB_URI");
+    const mongoURI = process.env.MONGODB_URI 
 
     if (!mongoURI) {
       throw new Error("MongoDB URI not found in config/environment");
