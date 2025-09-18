@@ -42,7 +42,7 @@ const Dashboard = () => {
         });
         if (data.success) setUser(data.user);
       } catch (err) {
-        if (err.name !== "CanceledError") {
+        if (err.code !== "ERR_CANCELED") {
           setError("Failed to load user data. Redirecting to login...");
           console.error("Dashboard API error:", err);
           setTimeout(() => navigate("/login", { replace: true }), 2000);
