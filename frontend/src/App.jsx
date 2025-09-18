@@ -41,24 +41,15 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
+
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
           {/* Admin routes */}
           <Route path="/auth/login" element={<AdminLogin />} />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminProtectedRoute>
-                <AdminDashboard />
-              </AdminProtectedRoute>
-            }
-          />
-          <Route
-            path="/transactions"
-            element={
-              <AdminProtectedRoute>
-                <TransactionsDashboard />
-              </AdminProtectedRoute>
-            }
-          />
+         
+          <Route path="/transactions" element={<TransactionsDashboard />} />
+         
+           
       
           {/* Protected routes for regular users */}
           <Route
