@@ -41,18 +41,26 @@ export default function TransactionsDashboard() {
 
   // Handle logout
   const handleLogout = async () => {
-    try {
-      // Call the logout API endpoint
-      await api.get("/logout");
-      
-      // Redirect to auth login
-      navigate("/auth/login");
-    } catch (err) {
-      console.error("Logout failed", err);
-      // Still redirect even if API call fails
-      navigate("/auth/login");
-    }
-  };
+  try {
+    // 1️⃣ Call backend logout endpoint if you use cookies
+    await api.get("/logout");
+
+    // 2️⃣ Clear token from localStorage (if using token auth)
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("userToken"); // optional, if you have separate tokens
+
+    // 3️⃣ Redirect to login page
+    navigate("/auth/login", { replace: true });
+  } catch (err) {
+    console.error("Logout failed:", err);
+    
+    // Ensure local cleanup & redirect happens even if API fails
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("userToken");
+    navigate("/auth/login", { replace: true });
+  }
+};
+
 
   // fetch (used by initial load and polling)
   const fetchTransactions = async () => {
