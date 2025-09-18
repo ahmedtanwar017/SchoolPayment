@@ -45,14 +45,16 @@
 
 // export default api;
 
+// Services/Axios.js
 import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://school-payment-psi.vercel.app",
   headers: { "Content-Type": "application/json" },
-  withCredentials: false, // We are using headers, not cookies
+  withCredentials: false, // cookies nahi, header se token bhejenge
 });
 
+// Interceptor to add token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("userToken") || localStorage.getItem("adminToken");
   if (token) config.headers.Authorization = `Bearer ${token}`;

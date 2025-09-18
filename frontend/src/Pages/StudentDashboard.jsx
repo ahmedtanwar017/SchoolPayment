@@ -4,7 +4,7 @@ import api from "../Services/Axios";
 import Spinner from "../Components/Spinner";
 import { CreditCardIcon, CheckCircleIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 
-// Option Card Component
+// Option Card
 const OptionCard = ({ icon: Icon, name, description, action }) => (
   <button
     onClick={action}
@@ -40,20 +40,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const options = [
-    {
-      id: "create-amount",
-      name: "Pay Now",
-      description: "Make a payment towards your school fees quickly and securely",
-      icon: CreditCardIcon,
-      action: () => navigate("/create-payment"),
-    },
-    {
-      id: "check-status",
-      name: "Check Status",
-      description: "Track your recent payment history and status updates",
-      icon: CheckCircleIcon,
-      action: () => navigate("/status"),
-    },
+    { id: "pay-now", name: "Pay Now", description: "Pay your school fees quickly", icon: CreditCardIcon, action: () => navigate("/create-payment") },
+    { id: "check-status", name: "Check Status", description: "Track your recent payments", icon: CheckCircleIcon, action: () => navigate("/status") },
   ];
 
   useEffect(() => {
@@ -66,22 +54,21 @@ const Dashboard = () => {
 
         const { data } = await api.get("/users/me", { signal: controller.signal });
 
-        if (data.success) {
-          setUser(data.user);
-        }
+        if (data.success) setUser(data.user);
       } catch (err) {
         if (err.name !== "CanceledError") {
           console.error("Dashboard API error:", err);
 
-          // ✅ Auto-redirect on 401 Unauthorized
+          // ✅ Auto-logout & redirect if 401
           if (err.response?.status === 401) {
             localStorage.removeItem("userToken");
             localStorage.removeItem("adminToken");
-            navigate("/login");
+            navigate("/login", { replace: true });
             return;
           }
 
-          setError(err.response?.data?.message || "Failed to load user data.");
+          // Friendly error message for other errors
+          setError(err.response?.data?.message || "Failed to load user data. Please try again.");
         }
       } finally {
         setLoading(false);
@@ -89,23 +76,21 @@ const Dashboard = () => {
     };
 
     fetchUser();
-    return () => controller.abort();
+
+    return () => controller.abort(); // Cleanup on unmount
   }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 relative">
-      {/* Fixed Logout Button */}
+      {/* Logout */}
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={() => {
             localStorage.removeItem("userToken");
             localStorage.removeItem("adminToken");
-            navigate("/login");
+            navigate("/login", { replace: true });
           }}
-          className="flex items-center gap-2 bg-white text-gray-600 px-4 py-2.5 rounded-lg shadow-sm border border-gray-200 
-                     hover:shadow-md hover:border-gray-300 hover:bg-gray-100 font-medium transition-all duration-200 
-                     focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
-          aria-label="Logout"
+          className="flex items-center gap-2 bg-white text-gray-600 px-4 py-2.5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 hover:bg-gray-100 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
         >
           <ArrowRightOnRectangleIcon className="h-5 w-5" />
           Logout
@@ -113,7 +98,6 @@ const Dashboard = () => {
       </div>
 
       <div className="pt-16 pb-10 max-w-5xl mx-auto">
-        {/* User Greeting */}
         {loading ? (
           <div className="flex flex-col items-center justify-center h-48 bg-white rounded-xl shadow p-8 mb-10 border border-gray-100 animate-fade-in">
             <Spinner />
@@ -122,13 +106,7 @@ const Dashboard = () => {
         ) : error ? (
           <div className="bg-white rounded-xl shadow p-8 mb-10 border border-gray-100 text-center animate-fade-in">
             <div className="rounded-full bg-red-100 p-3 inline-flex items-center justify-center mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-red-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -146,14 +124,12 @@ const Dashboard = () => {
           )
         )}
 
-        {/* Options Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {options.map((option) => (
             <OptionCard key={option.id} {...option} />
           ))}
         </div>
 
-        {/* Footer */}
         <div className="mt-12 text-center text-gray-500 text-sm">
           <p>
             Need help?{" "}
@@ -164,18 +140,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Tailwind Animations */}
-      <style>
-        {`
-          @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-          }
-        `}
-      </style>
+      <style>{`
+        @keyframes fadeIn { 0% {opacity:0; transform:translateY(10px);} 100% {opacity:1; transform:translateY(0);} }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+      `}</style>
     </div>
   );
 };
