@@ -42,14 +42,8 @@ function App() {
 
           {/* Admin routes */}
           <Route path="/auth/login" element={<AdminLogin />} />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminProtectedRoute>
-                <TransactionsDashboard />
-              </AdminProtectedRoute>
-            }
-          />
+          
+          
           <Route
             path="/transactions"
             element={
