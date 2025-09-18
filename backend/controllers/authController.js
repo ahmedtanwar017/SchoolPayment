@@ -135,20 +135,19 @@ const logoutUser = (req, res) => {
 };
 
 const getMe = (req, res) => {
-  // Validate that user authentication was successful
   if (!req.user?.id) {
     return res.status(401).json({
+      success: false,
       error: "Authentication required",
       message: "User not authenticated",
     });
   }
 
-  // Return only essential, non-sensitive user information
   res.status(200).json({
+    success: true,   // ✅ Add this
     user: {
       id: req.user.id,
       name: req.user.name,
-      // Optional: include other safe fields if they exist
       ...(req.user.email && { email: req.user.email }),
       ...(req.user.username && { username: req.user.username }),
     },
