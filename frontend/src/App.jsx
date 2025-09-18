@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import AdminProtectedRoute from "./Components/AdminProtectedRoute";
 import Spinner from "./Components/Spinner";
+import AdminDashboard from "./Pages/AdminDashboard.jsx";
 
 // Lazy-loaded Pages
 const Dashboard = lazy(() => import("./Pages/StudentDashboard"));
@@ -42,8 +43,14 @@ function App() {
 
           {/* Admin routes */}
           <Route path="/auth/login" element={<AdminLogin />} />
-          
-          
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
           <Route
             path="/transactions"
             element={
