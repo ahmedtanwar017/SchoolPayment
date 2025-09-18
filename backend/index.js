@@ -30,7 +30,7 @@ app.use(cookieParser());
 // Enable CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: "https://schoolpayments.netlify.app",
     credentials: true,
   })
 );
