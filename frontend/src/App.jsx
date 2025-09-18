@@ -42,11 +42,11 @@ function App() {
           <Route path="/register" element={<Register />} />
 
 
-          
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
           {/* Admin routes */}
           <Route path="/auth/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+         
           <Route path="/transactions" element={<TransactionsDashboard />} />
          
            
