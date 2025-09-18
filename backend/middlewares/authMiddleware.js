@@ -1,10 +1,18 @@
 const jwt = require("jsonwebtoken");
 
-const loggedIn = (req, res, next) => {
+// middleware/authMiddleware.js
+const userModel = require("../models/user-model");
+
+// Middleware to protect routes
+const loggedIn = async (req, res, next) => {
   try {
-    // ✅ Only check Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // 1️⃣ Get token from Authorization header OR cookies
+    let token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
+    if (!token && req.cookies) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
       return res.status(401).json({
         success: false,
         error: "No authentication token provided",
@@ -12,13 +20,23 @@ const loggedIn = (req, res, next) => {
       });
     }
 
-    const token = authHeader.split(" ")[1];
-
-    // ✅ Verify JWT
+    // 2️⃣ Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
 
+    // 3️⃣ Fetch full user from DB
+    const user = await userModel.findById(decoded.id).lean();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: "User not found",
+        message: "The user associated with this token does not exist"
+      });
+    }
+
+    // 4️⃣ Attach user to request
+    req.user = user;
     next();
+
   } catch (err) {
     console.error("Auth error:", err.message);
 
@@ -43,7 +61,6 @@ const loggedIn = (req, res, next) => {
     }
   }
 };
-
 
 
 // middleware/auth.js

@@ -144,12 +144,12 @@ const getMe = (req, res) => {
   }
 
   res.status(200).json({
-    success: true,
+    success: true,   // ✅ Add this
     user: {
       id: req.user.id,
-      fullname: req.user.fullname, // ✅ consistent
+      name: req.user.fullname,
       ...(req.user.email && { email: req.user.email }),
-      isAdmin: req.user.isAdmin,
+      ...(req.user.fullname && { fullname: req.user.fullname }),
     },
   });
 };

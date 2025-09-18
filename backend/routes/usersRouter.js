@@ -16,7 +16,7 @@ router.post("/login", loginUser);
 router.get("/logout", logoutUser);
 
 // Dashboard Login
-router.get("/me", getMe);
+router.get("/me", loggedIn, getMe);
 
 module.exports = router;
 
