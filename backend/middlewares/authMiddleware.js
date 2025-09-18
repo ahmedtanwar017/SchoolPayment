@@ -1,15 +1,10 @@
 const jwt = require("jsonwebtoken");
 
-// middleware/authMiddleware.js
 const loggedIn = (req, res, next) => {
   try {
-    // 1️⃣ Get token from Authorization header OR cookies
-    let token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
-    if (!token && req.cookies) {
-      token = req.cookies.token;
-    }
-
-    if (!token) {
+    // ✅ Only check Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         error: "No authentication token provided",
@@ -17,11 +12,13 @@ const loggedIn = (req, res, next) => {
       });
     }
 
-    // 2️⃣ Verify JWT
+    const token = authHeader.split(" ")[1];
+
+    // ✅ Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    next();
 
+    next();
   } catch (err) {
     console.error("Auth error:", err.message);
 
@@ -46,6 +43,7 @@ const loggedIn = (req, res, next) => {
     }
   }
 };
+
 
 
 // middleware/auth.js
