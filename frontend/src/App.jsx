@@ -52,8 +52,14 @@ function App() {
            
       
           {/* Protected routes for regular users */}
-          
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/create-payment"
             element={

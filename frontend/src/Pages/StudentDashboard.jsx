@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../Services/Axios"; // Axios instance with token
+import api from "../Services/Axios";
 import Spinner from "../Components/Spinner";
-import {
-  CreditCardIcon,
-  CheckCircleIcon,
-  ArrowRightOnRectangleIcon,
-} from "@heroicons/react/24/outline";
+import { CreditCardIcon, CheckCircleIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
 
-// Reusable Option Card
+// Option Card Component
 const OptionCard = ({ icon: Icon, name, description, action }) => (
   <button
     onClick={action}
@@ -68,16 +64,24 @@ const Dashboard = () => {
         setError(null);
         setLoading(true);
 
-        // Axios instance handles token automatically
         const { data } = await api.get("/users/me", { signal: controller.signal });
 
-        if (data.success) setUser(data.user);
+        if (data.success) {
+          setUser(data.user);
+        }
       } catch (err) {
         if (err.name !== "CanceledError") {
           console.error("Dashboard API error:", err);
-          setError(
-            err.response?.data?.message || "Failed to load user data. Redirecting to login..."
-          );
+
+          // ✅ Auto-redirect on 401 Unauthorized
+          if (err.response?.status === 401) {
+            localStorage.removeItem("userToken");
+            localStorage.removeItem("adminToken");
+            navigate("/login");
+            return;
+          }
+
+          setError(err.response?.data?.message || "Failed to load user data.");
         }
       } finally {
         setLoading(false);
@@ -86,7 +90,7 @@ const Dashboard = () => {
 
     fetchUser();
     return () => controller.abort();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 relative">
