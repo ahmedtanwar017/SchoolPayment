@@ -113,15 +113,35 @@ const Login = () => {
     setLoading(true);
     setError(""); // clear previous error
     try {
-      await api.post("/users/login", formData);
+      // 1️⃣ Login request
+      const { data } = await api.post("/users/login", formData);
 
-      // Smooth login: small delay to show spinner
+      // 2️⃣ Save token to localStorage
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      } else {
+        throw new Error("Login failed: no token received");
+      }
+
+      // 3️⃣ Fetch current user
+      const userResponse = await api.get("/users/me", {
+        headers: { Authorization: `Bearer ${data.token}` },
+      });
+
+      if (userResponse.data.user) {
+        // You can store the user in global state or localStorage if needed
+        console.log("Logged in user:", userResponse.data.user);
+      } else {
+        throw new Error("Failed to fetch user details");
+      }
+
+      // 4️⃣ Navigate to dashboard
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
-      }, 800);
+      }, 500);
     } catch (err) {
       console.error(err);
-      setError("Invalid email or password. Please try again."); // 🔹 set error for user
+      setError(err.response?.data?.message || err.message || "Login failed");
       setLoading(false);
     }
   };
@@ -198,4 +218,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;
