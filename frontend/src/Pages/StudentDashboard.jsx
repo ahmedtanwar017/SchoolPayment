@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../Services/Axios"; // Axios instance with token handling
+import api from "../Services/Axios"; // Axios instance with token
 import Spinner from "../Components/Spinner";
 import {
   CreditCardIcon,
@@ -8,7 +8,7 @@ import {
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
-// Reusable Option Card Component
+// Reusable Option Card
 const OptionCard = ({ icon: Icon, name, description, action }) => (
   <button
     onClick={action}
@@ -68,14 +68,8 @@ const Dashboard = () => {
         setError(null);
         setLoading(true);
 
-        // Get token from localStorage (set after login)
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("Authentication token not found");
-
-        const { data } = await api.get("/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
+        // Axios instance handles token automatically
+        const { data } = await api.get("/users/me", { signal: controller.signal });
 
         if (data.success) setUser(data.user);
       } catch (err) {
@@ -84,7 +78,6 @@ const Dashboard = () => {
           setError(
             err.response?.data?.message || "Failed to load user data. Redirecting to login..."
           );
-          setTimeout(() => navigate("/login", { replace: true }), 2500);
         }
       } finally {
         setLoading(false);
@@ -93,14 +86,18 @@ const Dashboard = () => {
 
     fetchUser();
     return () => controller.abort();
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 relative">
       {/* Fixed Logout Button */}
       <div className="fixed top-4 right-4 z-50">
         <button
-          onClick={() => navigate("/logout")}
+          onClick={() => {
+            localStorage.removeItem("userToken");
+            localStorage.removeItem("adminToken");
+            navigate("/login");
+          }}
           className="flex items-center gap-2 bg-white text-gray-600 px-4 py-2.5 rounded-lg shadow-sm border border-gray-200 
                      hover:shadow-md hover:border-gray-300 hover:bg-gray-100 font-medium transition-all duration-200 
                      focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
