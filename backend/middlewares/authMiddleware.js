@@ -3,8 +3,12 @@ const jwt = require("jsonwebtoken");
 // middleware/authMiddleware.js
 const loggedIn = (req, res, next) => {
   try {
-    const token = req.cookies && req.cookies.token;
-    
+    // 1️⃣ Get token from Authorization header OR cookies
+    let token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
+    if (!token && req.cookies) {
+      token = req.cookies.token;
+    }
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -13,13 +17,11 @@ const loggedIn = (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "default_secret"
-    );
-
+    // 2️⃣ Verify JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
+
   } catch (err) {
     console.error("Auth error:", err.message);
 
@@ -44,6 +46,7 @@ const loggedIn = (req, res, next) => {
     }
   }
 };
+
 
 // middleware/auth.js
 const isAdmin = (req, res, next) => {
