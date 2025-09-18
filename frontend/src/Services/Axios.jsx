@@ -22,13 +22,34 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    // Prefer admin token if exists
+    const adminToken = localStorage.getItem("adminToken");
+    const userToken = localStorage.getItem("userToken");
+    const token = adminToken || userToken;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response interceptor → handle unauthorized globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized. Clearing tokens...");
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("userToken");
+
+      // Optional: redirect to login
+      window.location.href = "/auth/login";
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default api;
