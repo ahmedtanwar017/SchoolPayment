@@ -71,13 +71,6 @@ const loginAdmin = async (req, res) => {
 };
 
 const getAdminDashboard = (req, res) => {
-  if (!req.admin?.id || !req.admin?.isAdmin) {
-    return res.status(401).json({
-      error: "Authentication required",
-      message: "Admin not authenticated",
-    });
-  }
-
   res.status(200).json({
     user: {
       id: req.admin.id,
