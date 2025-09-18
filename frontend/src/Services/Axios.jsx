@@ -45,8 +45,6 @@ api.interceptors.response.use(
       localStorage.removeItem("adminToken");
       localStorage.removeItem("userToken");
 
-      // Optional: redirect to login
-      window.location.href = "/auth/login";
     }
     return Promise.reject(error);
   }
