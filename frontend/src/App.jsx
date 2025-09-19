@@ -18,6 +18,8 @@ const AdminLogin = lazy(() => import("./Pages/LoginAdmin"));
 const TransactionsDashboard = lazy(() => import("./Pages/TransactionsDashboard"));
 const PaymentForm = lazy(() => import("./Pages/CreateAmount"));
 const CheckPaymentStatus = lazy(() => import("./Pages/CheckPaymentStatus.jsx"));
+const WebhookTest = lazy(() => import("./Pages/Webhook.jsx"))
+
 
 function App() {
   return (
@@ -40,14 +42,21 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-
-
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/webhooks" element={<WebhookTest />} />
+          
 
           {/* Admin routes */}
           <Route path="/auth/login" element={<AdminLogin />} />
-         
+                 
           <Route path="/transactions" element={<TransactionsDashboard />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <Dashboard />
+              </AdminProtectedRoute>
+            }
+          />
          
            
       

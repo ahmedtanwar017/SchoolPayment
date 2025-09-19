@@ -117,20 +117,25 @@ const loginUser = async (req, res) => {
   }
 };
 
+// controllers/authController.js
 const logoutUser = (req, res) => {
   try {
-    // 🔑 Reuse the same cookie setter, but pass an empty token & immediate expiry
-    setTokenCookie(res, "");
-    res.cookie("token", "", { expires: new Date(0) }); // make sure it clears
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    });
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Logout successful" });
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
   } catch (err) {
     console.error("Logout error:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Server error during logout" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error during logout",
+    });
   }
 };
 

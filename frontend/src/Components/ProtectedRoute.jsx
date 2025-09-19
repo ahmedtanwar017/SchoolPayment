@@ -10,15 +10,14 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await api.get("/users/me"); // uses your API instance
-        setAuthorized(true); // user is logged in
+        await api.get("/users/me"); // cookie is auto-sent
+        setAuthorized(true);
       } catch (err) {
-        setAuthorized(false); // not logged in
+        setAuthorized(false);
       } finally {
         setLoading(false);
       }
     };
-
     checkAuth();
   }, []);
 

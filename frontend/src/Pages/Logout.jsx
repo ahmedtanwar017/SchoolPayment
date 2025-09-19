@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../Services/Axios";
@@ -6,7 +6,6 @@ import Spinner from "../Components/Spinner";
 
 const Logout = () => {
   const navigate = useNavigate();
-  const [loggingOut, setLoggingOut] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -14,14 +13,13 @@ const Logout = () => {
 
     const logoutUser = async () => {
       try {
-        // Call backend logout route
-        await api.get("/users/logout", { signal });
+        // ✅ Include cookies
+        await api.get("/users/logout", { signal, withCredentials: true });
 
-        // Small delay to make the logout feel smooth
+        // Small delay for smooth UX
         setTimeout(() => {
-          setLoggingOut(false);
           navigate("/login", { replace: true });
-        }, 800); // 0.8 second delay
+        }, 800);
       } catch (err) {
         if (err.name !== "CanceledError") {
           console.error("Logout error:", err);

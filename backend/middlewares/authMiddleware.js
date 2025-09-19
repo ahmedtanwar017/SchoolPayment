@@ -1,64 +1,34 @@
 const jwt = require("jsonwebtoken");
 
 // middleware/authMiddleware.js
-const userModel = require("../models/user-model");
-
-// Middleware to protect routes
-const loggedIn = async (req, res, next) => {
+const loggedIn = (req, res, next) => {
   try {
-    // 1️⃣ Get token from Authorization header OR cookies
-    let token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
-    if (!token && req.cookies) {
-      token = req.cookies.token;
+    // First check cookie
+    let token = req.cookies?.token;
+
+    // Then check Authorization header
+    if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
     if (!token) {
       return res.status(401).json({
         success: false,
         error: "No authentication token provided",
-        message: "Please log in to access this resource"
+        message: "Please log in to access this resource",
       });
     }
 
-    // 2️⃣ Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // 3️⃣ Fetch full user from DB
-    const user = await userModel.findById(decoded.id).lean();
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: "User not found",
-        message: "The user associated with this token does not exist"
-      });
-    }
-
-    // 4️⃣ Attach user to request
-    req.user = user;
+    req.user = decoded;
     next();
-
   } catch (err) {
     console.error("Auth error:", err.message);
-
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({
-        success: false,
-        error: "Session expired",
-        message: "Please log in again"
-      });
-    } else if (err.name === "JsonWebTokenError") {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid token",
-        message: "Please log in again"
-      });
-    } else {
-      return res.status(500).json({
-        success: false,
-        error: "Internal server error",
-        message: "An unexpected error occurred"
-      });
-    }
+    return res.status(401).json({
+      success: false,
+      error: "Invalid or expired token",
+      message: "Please log in again",
+    });
   }
 };
 

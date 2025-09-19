@@ -35,6 +35,13 @@ app.use(
   })
 );
 
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//     credentials: true,
+//   })
+// );
+
 // Serve static files if needed (optional)
 app.use(express.static(path.join(__dirname, "public")));
 
