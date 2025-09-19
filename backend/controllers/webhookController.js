@@ -128,6 +128,7 @@
 // };
 
 // module.exports = { handleWebhook };
+
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -136,12 +137,7 @@ const WebhookLog = require("../models/webhook-log-model");
 
 // Normalize status
 const normalizeStatus = (s) => {
-  const map = {
-    SUCCESS: "success",
-    FAILED: "failed",
-    CANCELLED: "cancelled",
-    PENDING: "pending",
-  };
+  const map = { SUCCESS: "success", FAILED: "failed", CANCELLED: "cancelled", PENDING: "pending" };
   return map[(s || "").toUpperCase()] || "unknown";
 };
 
@@ -162,41 +158,29 @@ const buildOrder = (orderInfo, fallback = false) => ({
 });
 
 const handleWebhook = async (req, res) => {
-  const debugLog = []; // Collect logs to return in response
+  const debugLog = [];
 
   try {
-    debugLog.push(`🌐 Incoming webhook: ${req.method}`);
+    debugLog.push(`Incoming webhook: ${req.method}`);
     debugLog.push(`Query: ${JSON.stringify(req.query)}`);
     debugLog.push(`Body: ${JSON.stringify(req.body || {})}`);
 
-    // Extract order info
     let orderInfo = {};
-    if (req.method === "POST") {
-      orderInfo = req.body.order_info || {};
-    } else if (req.method === "GET") {
-      orderInfo = {
-        order_id: req.query.EdvironCollectRequestId || req.query.collect_request_id,
-        status: req.query.status,
-        reason: req.query.reason || "",
-      };
-    }
+    if (req.method === "POST") orderInfo = req.body.order_info || {};
+    else if (req.method === "GET") orderInfo = {
+      order_id: req.query.EdvironCollectRequestId || req.query.collect_request_id,
+      status: req.query.status,
+      reason: req.query.reason || "",
+    };
+
     debugLog.push(`Resolved orderInfo: ${JSON.stringify(orderInfo)}`);
 
-    if (!orderInfo.order_id) {
-      debugLog.push("⚠️ Missing order_id, returning 400");
-      return res.status(400).json({
-        status: 400,
-        message: "Missing order_id in request",
-        debugLog,
-      });
-    }
+    if (!orderInfo.order_id) return res.status(400).json({ status: 400, message: "Missing order_id", debugLog });
 
-    const collect_request_id = orderInfo.order_id.includes("/")
-      ? orderInfo.order_id.split("/")[0]
-      : orderInfo.order_id;
+    const collect_request_id = orderInfo.order_id.includes("/") ? orderInfo.order_id.split("/")[0] : orderInfo.order_id;
     debugLog.push(`collect_request_id: ${collect_request_id}`);
 
-    // Log raw webhook
+    // Log webhook (optional)
     let logEntry;
     try {
       logEntry = await WebhookLog.create({
@@ -205,29 +189,22 @@ const handleWebhook = async (req, res) => {
         status: "RECEIVED",
       });
       debugLog.push("Webhook log saved");
-    } catch (err) {
-      debugLog.push(`⚠️ Failed to log webhook: ${err.message}`);
-    }
+    } catch (err) { debugLog.push(`Failed to save webhook log: ${err.message}`); }
 
-    // Handle API / env variables
+    // API call / env
     let unifiedOrder, edvironRaw = {}, signMethod = "unknown", fallback = false;
     const schoolId = process.env.SCHOOL_ID;
     const secret = process.env.PG_KEY;
 
     if (!schoolId || !secret) {
-      debugLog.push("⚠️ Missing SCHOOL_ID or PG_KEY, using fallback");
+      debugLog.push("Missing SCHOOL_ID or PG_KEY, using fallback");
       fallback = true;
       unifiedOrder = buildOrder(orderInfo, true);
     } else {
       try {
         let sign;
-        try {
-          sign = jwt.sign({ school_id: schoolId, collect_request_id }, secret, { algorithm: "HS256" });
-          signMethod = "JWT";
-        } catch {
-          sign = crypto.createHash("sha256").update(`${collect_request_id}${schoolId}${secret}`).digest("hex");
-          signMethod = "SHA256";
-        }
+        try { sign = jwt.sign({ school_id: schoolId, collect_request_id }, secret, { algorithm: "HS256" }); signMethod = "JWT"; }
+        catch { sign = crypto.createHash("sha256").update(`${collect_request_id}${schoolId}${secret}`).digest("hex"); signMethod = "SHA256"; }
 
         const url = `https://dev-vanilla.edviron.com/erp/collect-request/${collect_request_id}?school_id=${schoolId}&sign=${sign}`;
         debugLog.push(`Calling Edviron API with ${signMethod}: ${url}`);
@@ -237,13 +214,13 @@ const handleWebhook = async (req, res) => {
         unifiedOrder = buildOrder(data.order_info || data, false);
         debugLog.push("Edviron API call successful");
       } catch (apiErr) {
-        debugLog.push(`⚠️ Edviron API failed, using fallback: ${apiErr.message}`);
+        debugLog.push(`Edviron API failed, using fallback: ${apiErr.message}`);
         fallback = true;
         unifiedOrder = buildOrder(orderInfo, true);
       }
     }
 
-    // Save or update order in DB
+    // Save/update order in DB
     try {
       await OrderStatus.findOneAndUpdate(
         { collect_request_id },
@@ -251,24 +228,18 @@ const handleWebhook = async (req, res) => {
         { upsert: true, new: true }
       );
       debugLog.push("Order saved/updated in DB");
-    } catch (dbErr) {
-      debugLog.push(`⚠️ Failed to save order in DB: ${dbErr.message}`);
-    }
+    } catch (dbErr) { debugLog.push(`Failed to save order in DB: ${dbErr.message}`); }
 
-    // Update log entry
+    // Update webhook log
     if (logEntry) {
       logEntry.status = "PROCESSED";
       logEntry.processed_at = new Date();
       logEntry.sign_method = signMethod;
-      try {
-        await logEntry.save();
-        debugLog.push("Webhook log updated");
-      } catch (err) {
-        debugLog.push(`⚠️ Failed to update webhook log: ${err.message}`);
-      }
+      try { await logEntry.save(); debugLog.push("Webhook log updated"); }
+      catch (err) { debugLog.push(`Failed to update webhook log: ${err.message}`); }
     }
 
-    // Return 200 with debug info
+    // Always return 200 with debug
     return res.status(200).json({
       status: 200,
       signMethod,
@@ -280,13 +251,8 @@ const handleWebhook = async (req, res) => {
     });
 
   } catch (err) {
-    debugLog.push(`❌ Webhook unexpected error: ${err.message}`);
-    return res.status(200).json({
-      status: 200,
-      message: "Webhook received but internal error occurred",
-      debugLog,
-      error: err.message,
-    });
+    debugLog.push(`Unexpected error: ${err.message}`);
+    return res.status(200).json({ status: 200, message: "Webhook received with error", debugLog, error: err.message });
   }
 };
 
