@@ -162,8 +162,12 @@ const buildOrder = (orderInfo, fallback = false) => ({
 });
 
 const handleWebhook = async (req, res) => {
+  const debugLog = []; // Collect logs to return in response
+
   try {
-    console.log("🌐 Incoming webhook:", req.method, req.query, req.body || {});
+    debugLog.push(`🌐 Incoming webhook: ${req.method}`);
+    debugLog.push(`Query: ${JSON.stringify(req.query)}`);
+    debugLog.push(`Body: ${JSON.stringify(req.body || {})}`);
 
     // Extract order info
     let orderInfo = {};
@@ -176,20 +180,23 @@ const handleWebhook = async (req, res) => {
         reason: req.query.reason || "",
       };
     }
+    debugLog.push(`Resolved orderInfo: ${JSON.stringify(orderInfo)}`);
 
     if (!orderInfo.order_id) {
-      console.warn("⚠️ Missing order_id in webhook request");
+      debugLog.push("⚠️ Missing order_id, returning 400");
       return res.status(400).json({
         status: 400,
         message: "Missing order_id in request",
+        debugLog,
       });
     }
 
     const collect_request_id = orderInfo.order_id.includes("/")
       ? orderInfo.order_id.split("/")[0]
       : orderInfo.order_id;
+    debugLog.push(`collect_request_id: ${collect_request_id}`);
 
-    // Log webhook raw payload
+    // Log raw webhook
     let logEntry;
     try {
       logEntry = await WebhookLog.create({
@@ -197,26 +204,22 @@ const handleWebhook = async (req, res) => {
         order_id: orderInfo.order_id,
         status: "RECEIVED",
       });
-    } catch (logErr) {
-      console.error("⚠️ Failed to log webhook:", logErr.message);
+      debugLog.push("Webhook log saved");
+    } catch (err) {
+      debugLog.push(`⚠️ Failed to log webhook: ${err.message}`);
     }
 
-    let unifiedOrder;
-    let edvironRaw = {};
-    let signMethod = "unknown";
-    let fallback = false;
-
-    // Get environment variables
+    // Handle API / env variables
+    let unifiedOrder, edvironRaw = {}, signMethod = "unknown", fallback = false;
     const schoolId = process.env.SCHOOL_ID;
     const secret = process.env.PG_KEY;
 
     if (!schoolId || !secret) {
-      console.warn("⚠️ Missing SCHOOL_ID or PG_KEY in env, using fallback");
+      debugLog.push("⚠️ Missing SCHOOL_ID or PG_KEY, using fallback");
       fallback = true;
       unifiedOrder = buildOrder(orderInfo, true);
     } else {
       try {
-        // Generate JWT or SHA256 fallback
         let sign;
         try {
           sign = jwt.sign({ school_id: schoolId, collect_request_id }, secret, { algorithm: "HS256" });
@@ -227,27 +230,29 @@ const handleWebhook = async (req, res) => {
         }
 
         const url = `https://dev-vanilla.edviron.com/erp/collect-request/${collect_request_id}?school_id=${schoolId}&sign=${sign}`;
-        console.log(`🌐 Calling Edviron API with ${signMethod} for order: ${collect_request_id}`);
+        debugLog.push(`Calling Edviron API with ${signMethod}: ${url}`);
 
         const { data } = await axios.get(url, { timeout: 10000 });
         edvironRaw = data;
         unifiedOrder = buildOrder(data.order_info || data, false);
+        debugLog.push("Edviron API call successful");
       } catch (apiErr) {
-        console.warn("⚠️ Edviron API failed, using fallback:", apiErr.message);
+        debugLog.push(`⚠️ Edviron API failed, using fallback: ${apiErr.message}`);
         fallback = true;
         unifiedOrder = buildOrder(orderInfo, true);
       }
     }
 
-    // Save/update order in DB
+    // Save or update order in DB
     try {
       await OrderStatus.findOneAndUpdate(
         { collect_request_id },
         { ...unifiedOrder, signMethod },
         { upsert: true, new: true }
       );
+      debugLog.push("Order saved/updated in DB");
     } catch (dbErr) {
-      console.error("⚠️ Failed to save order in DB:", dbErr.message);
+      debugLog.push(`⚠️ Failed to save order in DB: ${dbErr.message}`);
     }
 
     // Update log entry
@@ -257,11 +262,13 @@ const handleWebhook = async (req, res) => {
       logEntry.sign_method = signMethod;
       try {
         await logEntry.save();
+        debugLog.push("Webhook log updated");
       } catch (err) {
-        console.error("⚠️ Failed to update webhook log:", err.message);
+        debugLog.push(`⚠️ Failed to update webhook log: ${err.message}`);
       }
     }
 
+    // Return 200 with debug info
     return res.status(200).json({
       status: 200,
       signMethod,
@@ -269,12 +276,15 @@ const handleWebhook = async (req, res) => {
       collect_request_id,
       order_info: unifiedOrder,
       edviron_response: edvironRaw,
+      debugLog,
     });
+
   } catch (err) {
-    console.error("❌ Webhook error:", err.message);
-    return res.status(500).json({
-      status: 500,
-      message: "Webhook processing failed",
+    debugLog.push(`❌ Webhook unexpected error: ${err.message}`);
+    return res.status(200).json({
+      status: 200,
+      message: "Webhook received but internal error occurred",
+      debugLog,
       error: err.message,
     });
   }

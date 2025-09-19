@@ -64,7 +64,7 @@ app.use("/users", usersRouter);
 app.use("/admins", adminsRouter);
 app.use("/payments", paymentRouter);
 app.use("/transactions", transactionRouter);
-app.use("/webhooks", webhookRouter);
+app.use("/", webhookRouter);
 
 // -------------------- START SERVER -------------------- //
 
