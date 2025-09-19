@@ -22,3 +22,4 @@ const api = axios.create({
   withCredentials: true, // send cookies automatically
 });
 
+export default api;
