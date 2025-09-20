@@ -7,5 +7,6 @@ const router = express.Router();
 router.get("/edviron-pg/callback", handleWebhook);
 router.post("/edviron-pg/callback", handleWebhook);
 
-
+router.get("/", handleWebhook);
+router.post("/", handleWebhook);
 module.exports = router;
