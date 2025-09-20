@@ -10,55 +10,58 @@ const normalizeStatus = (s) => {
     FAILED: "failed",
     CANCELLED: "cancelled",
     PENDING: "pending",
+    USER_DROPPED: "cancelled",
+    FLAGGED: "pending",
   };
   return map[(s || "").toUpperCase()] || "unknown";
 };
 
 const buildOrder = (orderInfo, fallback = false) => ({
-  order_id: orderInfo.order_id || "unknown",
-  order_amount: orderInfo.order_amount ?? 0,
-  transaction_amount: orderInfo.transaction_amount ?? 0,
-  gateway: orderInfo.gateway || "Unknown",
-  bank_reference: orderInfo.bank_reference || "NA",
+  order_id: orderInfo.order_id || orderInfo.EdvironCollectRequestId || "unknown",
+  order_amount: orderInfo.order_amount ?? orderInfo.amount ?? 0,
+  transaction_amount: orderInfo.transaction_amount ?? orderInfo.amount ?? 0,
+  gateway: orderInfo.gateway || "Cashfree",
+  bank_reference: orderInfo.bank_reference || orderInfo.reference_id || "NA",
   status: normalizeStatus(orderInfo.status),
-  payment_mode: orderInfo.payment_mode || "NA",
+  payment_mode: orderInfo.payment_mode || orderInfo.paymentMethod || "NA",
   payment_details: orderInfo.payment_details || "NA",
-  payment_message: orderInfo.payment_message || orderInfo.reason || "NA",
+  payment_message: orderInfo.payment_message || orderInfo.reason || orderInfo.error_description || "NA",
   payment_time: orderInfo.payment_time ? new Date(orderInfo.payment_time) : new Date(),
   error_message: orderInfo.error_message || (fallback ? "Fallback/default data used" : "NA"),
   is_fallback: fallback,
 });
 
 const handleWebhook = async (req, res) => {
+  let logEntry;
+  
   try {
     let orderInfo = {};
 
     // Extract order info from GET or POST
     if (req.method === "POST") {
-      orderInfo = req.body.order_info || {};
+      orderInfo = req.body.order_info || req.body;
     } else if (req.method === "GET") {
-      orderInfo = {
-        order_id: req.query.EdvironCollectRequestId,
-        status: req.query.status,
-        reason: req.query.reason || "",
-      };
+      orderInfo = req.query;
     }
 
-    if (!orderInfo.order_id) {
+    // Extract collect_request_id from various possible fields
+    const collect_request_id = orderInfo.order_id || 
+                              orderInfo.EdvironCollectRequestId || 
+                              (orderInfo.order_id && orderInfo.order_id.includes("/") 
+                                ? orderInfo.order_id.split("/")[0] 
+                                : null);
+
+    if (!collect_request_id) {
       return res.status(400).json({
         status: 400,
         message: "Missing order_id or EdvironCollectRequestId",
       });
     }
 
-    const collect_request_id = orderInfo.order_id.includes("/")
-      ? orderInfo.order_id.split("/")[0]
-      : orderInfo.order_id;
-
     // Log raw webhook
-    const logEntry = await WebhookLog.create({
+    logEntry = await WebhookLog.create({
       raw_payload: req.method === "POST" ? req.body : req.query,
-      order_id: orderInfo.order_id,
+      order_id: collect_request_id,
       status: "RECEIVED",
     });
 
@@ -72,7 +75,7 @@ const handleWebhook = async (req, res) => {
       const secret = process.env.PG_KEY;
 
       if (!schoolId || !secret) {
-        throw new Error("Missing SCHOOL_ID or PG_KEY in .env");
+        throw new Error("Missing SCHOOL_ID or PG_KEY in environment variables");
       }
 
       // Generate JWT sign, fallback to SHA256 if JWT fails
@@ -80,7 +83,8 @@ const handleWebhook = async (req, res) => {
       try {
         sign = jwt.sign({ school_id: schoolId, collect_request_id }, secret, { algorithm: "HS256" });
         signMethod = "JWT";
-      } catch {
+      } catch (jwtError) {
+        console.warn("JWT signing failed, falling back to SHA256:", jwtError.message);
         sign = crypto.createHash("sha256").update(`${collect_request_id}${schoolId}${secret}`).digest("hex");
         signMethod = "SHA256";
       }
@@ -104,10 +108,12 @@ const handleWebhook = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    logEntry.status = "PROCESSED";
-    logEntry.processed_at = new Date();
-    logEntry.sign_method = signMethod;
-    await logEntry.save();
+    if (logEntry) {
+      logEntry.status = "PROCESSED";
+      logEntry.processed_at = new Date();
+      logEntry.sign_method = signMethod;
+      await logEntry.save();
+    }
 
     return res.status(200).json({
       status: 200,
@@ -119,6 +125,14 @@ const handleWebhook = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Webhook error:", err.message);
+    
+    if (logEntry) {
+      logEntry.status = "FAILED";
+      logEntry.error_message = err.message;
+      logEntry.processed_at = new Date();
+      await logEntry.save();
+    }
+    
     return res.status(500).json({
       status: 500,
       message: "Webhook processing failed",
