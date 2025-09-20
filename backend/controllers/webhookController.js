@@ -17,7 +17,7 @@ const normalizeStatus = (s) => {
 };
 
 const buildOrder = (orderInfo, fallback = false) => ({
-  order_id: orderInfo.order_id || orderInfo.EdvironCollectRequestId || "unknown",
+  order_id: orderInfo.order_id || orderInfo.collect_request_id || "unknown",
   order_amount: orderInfo.order_amount ?? orderInfo.amount ?? 0,
   transaction_amount: orderInfo.transaction_amount ?? orderInfo.amount ?? 0,
   gateway: orderInfo.gateway || "Cashfree",
@@ -35,9 +35,17 @@ const handleWebhook = async (req, res) => {
   let logEntry;
   
   try {
+    console.log("Webhook received:", {
+      method: req.method,
+      path: req.path,
+      headers: req.headers,
+      body: req.body,
+      query: req.query
+    });
+
     let orderInfo = {};
 
-    // Extract order info from GET or POST
+    // Extract order info based on HTTP method
     if (req.method === "POST") {
       orderInfo = req.body.order_info || req.body;
     } else if (req.method === "GET") {
@@ -46,15 +54,18 @@ const handleWebhook = async (req, res) => {
 
     // Extract collect_request_id from various possible fields
     const collect_request_id = orderInfo.order_id || 
+                              orderInfo.collect_request_id || 
                               orderInfo.EdvironCollectRequestId || 
                               (orderInfo.order_id && orderInfo.order_id.includes("/") 
                                 ? orderInfo.order_id.split("/")[0] 
                                 : null);
 
     if (!collect_request_id) {
+      console.error("Missing order_id or collect_request_id");
       return res.status(400).json({
         status: 400,
-        message: "Missing order_id or EdvironCollectRequestId",
+        message: "Missing order_id or collect_request_id",
+        received_params: Object.keys(orderInfo)
       });
     }
 
@@ -63,6 +74,7 @@ const handleWebhook = async (req, res) => {
       raw_payload: req.method === "POST" ? req.body : req.query,
       order_id: collect_request_id,
       status: "RECEIVED",
+      source: req.path.includes("edviron-pg") ? "edviron-pg" : "generic"
     });
 
     let unifiedOrder;
@@ -90,13 +102,13 @@ const handleWebhook = async (req, res) => {
       }
 
       const url = `https://dev-vanilla.edviron.com/erp/collect-request/${collect_request_id}?school_id=${schoolId}&sign=${sign}`;
-      console.log(`🌐 Calling Edviron API with ${signMethod} for order: ${collect_request_id}`);
+      console.log(`Calling Edviron API with ${signMethod} for order: ${collect_request_id}`);
 
       const { data } = await axios.get(url, { timeout: 10000 });
       edvironRaw = data;
       unifiedOrder = buildOrder(data.order_info || data, false);
     } catch (apiErr) {
-      console.warn("⚠️ Edviron API failed, using fallback:", apiErr.message);
+      console.warn("Edviron API failed, using fallback:", apiErr.message);
       fallback = true;
       unifiedOrder = buildOrder(orderInfo, true);
     }
@@ -115,6 +127,8 @@ const handleWebhook = async (req, res) => {
       await logEntry.save();
     }
 
+    console.log(`Webhook processed successfully for order: ${collect_request_id}`);
+    
     return res.status(200).json({
       status: 200,
       signMethod,
@@ -124,7 +138,7 @@ const handleWebhook = async (req, res) => {
       edviron_response: edvironRaw,
     });
   } catch (err) {
-    console.error("❌ Webhook error:", err.message);
+    console.error("Webhook processing error:", err.message);
     
     if (logEntry) {
       logEntry.status = "FAILED";
@@ -137,6 +151,7 @@ const handleWebhook = async (req, res) => {
       status: 500,
       message: "Webhook processing failed",
       error: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 };
