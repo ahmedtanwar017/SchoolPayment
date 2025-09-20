@@ -28,19 +28,19 @@ connectDB();
 app.use(cookieParser());
 
 // Enable CORS
-// app.use(
-//   cors({
-//     origin: "https://schoolpayments.netlify.app",
-//     credentials: true,
-//   })
-// );
-
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://schoolpayments.netlify.app",
     credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//     credentials: true,
+//   })
+// );
 
 // Serve static files if needed (optional)
 app.use(express.static(path.join(__dirname, "public")));
