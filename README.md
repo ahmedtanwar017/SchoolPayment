@@ -1,4 +1,4 @@
-![fee](./backend/images/fee.png)
+![fee](./frontend/public/images/fee.png)
 
 # SchoolPay - MERN Stack School Payment System
 
@@ -140,25 +140,25 @@ Backend will run at http://localhost:000
 
 ## Usage
 Students can register and log in.
-![login](./backend/images/login.png)
-![register](./backend/images/register.png)
+![login](./frontend/public/images/login.png)
+![register](./frontend/public/images/register.png)
 
 
 
 Studemts Dashboard options allow:
-![StudentDashboard](./backend/images/StudentDashboard.png)
+![StudentDashboard](./frontend/public/images/StudentDashboard.png)
 
 
 
 Create payment → redirected to Edviron payment link.
-![CreatePayment](./backend/images/CreatePayment.png)
-![paynow](./backend/images/paynow.png)
-![proceed](./backend/images/proceed.png)
-![pay](./backend/images/pay.png)
+![CreatePayment](./frontend/public/images/CreatePayment.png)
+![paynow](./frontend/public/images/paynow.png)
+![proceed](./frontend/public/images/proceed.png)
+![pay](./frontend/public/images/pay.png)
 
 Check payment status → view payment history.
-![CheckStatus](./backend/images/CheckStatus.png)
-![status](./backend/images/status.png)
+![CheckStatus](./frontend/public/images/CheckStatus.png)
+![status](./frontend/public/images/status.png)
 
 ## Admins
 1. Create admin via backend script:
@@ -168,15 +168,15 @@ node scripts/createAdmin.js
 ```
 
 2. Admin login route: /admins/auth/login
-![adminlogin](./backend/images/adminlogin.png)
+![adminlogin](./frontend/public/images/adminlogin.png)
 
 3. Admin dashboard: http://localhost:5173/admin/dashboard
 
 - White Mode
-![whitemode](./backend/images/whitemode.png)
+![whitemode](./frontend/public/images/whitemode.png)
 
 - Black Mode
-![blackmode](./backend/images/blackmode.png)
+![blackmode](./frontend/public/images/blackmode.png)
 
 
 
